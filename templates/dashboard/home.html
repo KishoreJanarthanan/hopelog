@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard | LifeLog{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <div>
+        <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white">Hey, {{ user.username }} 👋</h1>
+        <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm">Here's your life overview for today.</p>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+
+        <div class="stat-card bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-5 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-amber-500 text-xl flex-shrink-0">
+                <i class="fa-solid fa-face-smile"></i>
+            </div>
+            <div>
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Mood Today</p>
+                <p class="text-3xl font-extrabold text-slate-900 dark:text-white mt-0.5">
+                    {% if todays_log %}{{ todays_log.mood }}/10{% else %}—{% endif %}
+                </p>
+                <p class="text-xs text-amber-500 font-medium mt-0.5">{% if todays_log %}energy: {{ todays_log.energy }}/10{% else %}not logged yet{% endif %}</p>
+            </div>
+        </div>
+
+        <div class="stat-card bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-5 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-500 text-xl flex-shrink-0">
+                <i class="fa-solid fa-check-double"></i>
+            </div>
+            <div>
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Habits Today</p>
+                <p class="text-3xl font-extrabold text-slate-900 dark:text-white mt-0.5">{{ habits_completed_today }}/{{ habits_total }}</p>
+                <p class="text-xs text-indigo-400 font-medium mt-0.5">completed</p>
+            </div>
+        </div>
+
+        <div class="stat-card bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-5 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-500 text-xl flex-shrink-0">
+                <i class="fa-solid fa-wallet"></i>
+            </div>
+            <div>
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Spent This Month</p>
+                <p class="text-3xl font-extrabold text-slate-900 dark:text-white mt-0.5">₹{{ monthly_expense }}</p>
+                <p class="text-xs text-emerald-400 font-medium mt-0.5">total expenses</p>
+            </div>
+        </div>
+
+        <div class="stat-card bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-5 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center text-purple-500 text-xl flex-shrink-0">
+                <i class="fa-solid fa-book"></i>
+            </div>
+            <div>
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Learning Hours</p>
+                <p class="text-3xl font-extrabold text-slate-900 dark:text-white mt-0.5">{{ total_learn_hours }}h</p>
+                <p class="text-xs text-purple-400 font-medium mt-0.5">total tracked</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart + Quick Log -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+        <!-- Mood Chart -->
+        <div class="lg:col-span-2 bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h3 class="font-bold text-slate-900 dark:text-white">Mood & Energy (Last 7 Days)</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Tracked from your daily logs</p>
+                </div>
+            </div>
+            <div class="h-48">
+                <canvas id="moodChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Quick Daily Log -->
+        <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-6 flex flex-col justify-between">
+            <h3 class="font-bold text-slate-900 dark:text-white mb-4">Today's Quick Log</h3>
+            {% if todays_log %}
+            <div class="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                <div class="flex justify-between"><span class="text-slate-400">Mood</span><span class="font-bold">{{ todays_log.mood }}/10</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Energy</span><span class="font-bold">{{ todays_log.energy }}/10</span></div>
+                {% if todays_log.sleep_hours %}<div class="flex justify-between"><span class="text-slate-400">Sleep</span><span class="font-bold">{{ todays_log.sleep_hours }}h</span></div>{% endif %}
+                {% if todays_log.note %}<p class="text-xs italic text-slate-400 mt-2 line-clamp-2">"{{ todays_log.note }}"</p>{% endif %}
+            </div>
+            <a href="/trackers/daily-log/" class="mt-4 w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-indigo-600 hover:text-white text-slate-600 dark:text-slate-300 text-sm font-semibold transition">
+                ✏️ Edit Today's Log
+            </a>
+            {% else %}
+            <p class="text-slate-400 text-sm mb-4 flex-1 flex items-center">You haven't logged today yet. Take 30 seconds!</p>
+            <a href="/trackers/daily-log/" class="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition shadow-lg">
+                <i class="fa-solid fa-sun text-xs"></i> Log Today
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        <!-- Recent Daily Logs -->
+        <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-6">
+            <h3 class="font-bold text-slate-900 dark:text-white mb-4">Recent Daily Logs</h3>
+            {% if recent_logs %}
+            <ul class="space-y-2">
+                {% for log in recent_logs %}
+                <li class="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-700/40 last:border-0">
+                    <span class="text-sm text-slate-500 dark:text-slate-400">{{ log.date|date:"M d" }}</span>
+                    <div class="flex items-center gap-4 text-sm">
+                        <span class="text-amber-500 font-semibold">😊 {{ log.mood }}/10</span>
+                        <span class="text-blue-400 font-semibold">⚡ {{ log.energy }}/10</span>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-slate-400 text-sm">No logs yet. <a href="/trackers/daily-log/" class="text-indigo-500 underline">Start today!</a></p>
+            {% endif %}
+        </div>
+
+        <!-- Recent Learning -->
+        <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-6">
+            <h3 class="font-bold text-slate-900 dark:text-white mb-4">Recent Learning</h3>
+            {% if recent_learning %}
+            <ul class="space-y-2">
+                {% for log in recent_learning %}
+                <li class="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-slate-700/40 last:border-0">
+                    <div class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center text-purple-500 flex-shrink-0 text-xs">
+                        <i class="fa-solid fa-book"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{{ log.topic }}</p>
+                        <p class="text-xs text-slate-400">{{ log.duration_minutes }} mins &bull; {{ log.date|date:"M d" }}</p>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-slate-400 text-sm">No learning logs yet. <a href="/trackers/learning/" class="text-indigo-500 underline">Log something!</a></p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const isDark = document.getElementById('html-root').classList.contains('dark');
+    const gridColor = isDark ? 'rgba(148,163,184,0.1)' : 'rgba(0,0,0,0.06)';
+    const labelColor = isDark ? '#94a3b8' : '#64748b';
+    const moodLabels = {{ mood_labels|safe }};
+    const moodData = {{ mood_data|safe }};
+
+    const ctx = document.getElementById('moodChart').getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, 180);
+    grad.addColorStop(0, 'rgba(99,102,241,0.35)');
+    grad.addColorStop(1, 'rgba(99,102,241,0)');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: moodLabels,
+            datasets: [{
+                label: 'Mood',
+                data: moodData,
+                fill: true,
+                backgroundColor: grad,
+                borderColor: '#6366f1',
+                borderWidth: 2.5,
+                tension: 0.4,
+                pointBackgroundColor: '#6366f1',
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                spanGaps: true,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { min: 1, max: 10, grid: { color: gridColor }, ticks: { color: labelColor, font: { size: 11 } } },
+                x: { grid: { display: false }, ticks: { color: labelColor, font: { size: 11 } } }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

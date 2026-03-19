@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% block title %}DSA Tracker | PrepTracker{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div>
+        <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white flex items-center gap-3">
+            <span class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white">
+                <i class="fa-solid fa-code text-base"></i>
+            </span>
+            DSA Tracker
+        </h1>
+        <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm ml-12">Log your daily algorithm & data structures practice.</p>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-6 items-start">
+
+        <!-- ===== LEFT: LOG FORM ===== -->
+        <div class="w-full lg:w-80 flex-shrink-0">
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-6 sticky top-24">
+                <h2 class="text-base font-bold text-slate-900 dark:text-white mb-4">Log Practice Session</h2>
+                <form method="POST" class="space-y-4">
+                    {% csrf_token %}
+
+                    <!-- Date -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Date</label>
+                        <input type="date" name="date" value="{{ today }}"
+                            class="w-full bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition">
+                    </div>
+
+                    <!-- Platform -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Platform</label>
+                        <select name="platform"
+                            class="w-full bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                            <option value="LC">LeetCode</option>
+                            <option value="CC">CodeChef</option>
+                            <option value="CF">Codeforces</option>
+                            <option value="HR">HackerRank</option>
+                            <option value="OT">Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Topic -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Topic</label>
+                        <input type="text" name="topic" required placeholder="e.g. Arrays, DP, Graphs"
+                            class="w-full bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition placeholder:text-slate-400">
+                    </div>
+
+                    <!-- Problems Solved -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Problems Solved</label>
+                        <div class="flex items-center gap-3">
+                            <button type="button" onclick="adjustCount(-1)" class="w-9 h-9 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-white font-bold flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-900/40 hover:text-red-500 transition">−</button>
+                            <input type="number" name="problems_solved" id="problem-count" value="5" min="1"
+                                class="flex-1 text-center bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none font-bold">
+                            <button type="button" onclick="adjustCount(1)" class="w-9 h-9 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-white font-bold flex items-center justify-center hover:bg-emerald-100 dark:hover:bg-emerald-900/40 hover:text-emerald-500 transition">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Notes <span class="font-normal">(optional)</span></label>
+                        <textarea name="notes" rows="3" placeholder="Any observations or links..."
+                            class="w-full bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition placeholder:text-slate-400 resize-none"></textarea>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 active:scale-95">
+                        <i class="fa-solid fa-check"></i> Save Session
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ===== RIGHT: HISTORY + TABLE ===== -->
+        <div class="flex-1 space-y-6 min-w-0">
+
+            <!-- Quick Stats Row -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-4 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-500 text-lg flex-shrink-0">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Total Logs</p>
+                        <p class="text-xl font-extrabold text-slate-900 dark:text-white">{{ practices|length }}</p>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-4 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-500 text-lg flex-shrink-0">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">Total Solved</p>
+                        <p class="text-xl font-extrabold text-slate-900 dark:text-white">{{ total_dsa }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Table -->
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-2xl overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700/60">
+                    <h3 class="font-bold text-slate-900 dark:text-white">Practice Log History</h3>
+                </div>
+
+                {% if practices %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-700/60 bg-slate-50 dark:bg-slate-800/80">
+                                <th class="text-left px-6 py-3">Date</th>
+                                <th class="text-left px-6 py-3">Platform</th>
+                                <th class="text-left px-6 py-3">Topic</th>
+                                <th class="text-center px-6 py-3">Solved</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-700/40">
+                            {% for log in practices %}
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition">
+                                <td class="px-6 py-3.5 text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap font-medium">
+                                    {{ log.date|date:"M d, Y" }}
+                                </td>
+                                <td class="px-6 py-3.5 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold
+                                        {% if log.platform == 'LC' %}bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400
+                                        {% elif log.platform == 'CC' %}bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400
+                                        {% elif log.platform == 'CF' %}bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400
+                                        {% elif log.platform == 'HR' %}bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400
+                                        {% else %}bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300{% endif %}">
+                                        {{ log.get_platform_display }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-3.5 text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                    {{ log.topic }}
+                                </td>
+                                <td class="px-6 py-3.5 text-center">
+                                    <span class="text-sm font-extrabold text-indigo-600 dark:text-indigo-400">{{ log.problems_solved }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <!-- Empty State -->
+                <div class="py-16 text-center">
+                    <div class="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-4 text-3xl text-slate-300 dark:text-slate-500">
+                        <i class="fa-solid fa-code"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-900 dark:text-white">No sessions logged yet</h3>
+                    <p class="text-sm text-slate-400 mt-1">Fill in the form on the left to log your first session!</p>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function adjustCount(delta) {
+    const input = document.getElementById('problem-count');
+    const newVal = Math.max(1, parseInt(input.value || 1) + delta);
+    input.value = newVal;
+}
+</script>
+{% endblock %}

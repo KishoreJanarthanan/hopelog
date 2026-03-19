@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" class="dark" id="html-root">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LifeLog{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        if (localStorage.getItem('theme') === 'light') {
+            document.documentElement.classList.remove('dark');
+        } else {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] } } }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .sidebar-link { transition: all 0.2s ease; }
+        .sidebar-link:hover { transform: translateX(2px); }
+        .stat-card { transition: all 0.25s ease; }
+        .stat-card:hover { transform: translateY(-3px); }
+        @keyframes slideInRight {
+            from { transform: translateX(120%); opacity: 0; }
+            to   { transform: translateX(0); opacity: 1; }
+        }
+        .toast-enter { animation: slideInRight 0.4s ease forwards; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 10px; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased min-h-screen">
+
+{% if user.is_authenticated %}
+
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden" onclick="toggleSidebar()"></div>
+
+<!-- === SIDEBAR === -->
+<aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-slate-900 border-r border-slate-800 flex flex-col z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+
+    <div class="h-16 flex items-center gap-3 px-6 border-b border-slate-800 flex-shrink-0">
+        <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+            <i class="fa-solid fa-seedling text-white text-sm"></i>
+        </div>
+        <span class="font-extrabold text-white text-lg tracking-tight">LifeLog</span>
+    </div>
+
+    <div class="px-4 py-4 border-b border-slate-800 flex-shrink-0">
+        <div class="flex items-center gap-3 p-2">
+            <div class="w-9 h-9 rounded-full bg-indigo-600 flex-shrink-0 flex items-center justify-center font-bold text-white text-sm">
+                {{ user.username|make_list|first|upper }}
+            </div>
+            <div class="overflow-hidden">
+                <p class="text-sm font-semibold text-white truncate">{{ user.username }}</p>
+                <p class="text-xs text-indigo-400 font-medium">🔥 {{ user.userprofile.current_streak|default:"0" }} day streak</p>
+            </div>
+        </div>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <p class="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-widest">Life Tracker</p>
+
+        <a href="/" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if request.path == '/' %}bg-indigo-600 text-white{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+            <i class="fa-solid fa-house w-5 text-center"></i> Dashboard
+        </a>
+        <a href="/trackers/daily-log/" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if '/daily-log/' in request.path %}bg-indigo-600 text-white{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+            <i class="fa-solid fa-sun w-5 text-center"></i> Daily Log
+        </a>
+        <a href="/trackers/habits/" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if '/habits/' in request.path %}bg-indigo-600 text-white{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+            <i class="fa-solid fa-check-double w-5 text-center"></i> Habits
+        </a>
+        <a href="/trackers/expenses/" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if '/expenses/' in request.path %}bg-indigo-600 text-white{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+            <i class="fa-solid fa-wallet w-5 text-center"></i> Expenses
+        </a>
+        <a href="/trackers/learning/" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium {% if '/learning/' in request.path %}bg-indigo-600 text-white{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+            <i class="fa-solid fa-book w-5 text-center"></i> Learning
+        </a>
+    </nav>
+
+    <div class="p-3 border-t border-slate-800 flex-shrink-0">
+        <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-red-900/30 hover:text-red-400 transition">
+                <i class="fa-solid fa-right-from-bracket w-5 text-center"></i> Logout
+            </button>
+        </form>
+    </div>
+</aside>
+
+<!-- === MAIN AREA === -->
+<div class="md:pl-64 flex flex-col min-h-screen">
+    <header class="sticky top-0 z-20 h-16 bg-slate-100/80 dark:bg-slate-950/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 md:px-8 gap-4 flex-shrink-0">
+        <button class="md:hidden text-slate-500" onclick="toggleSidebar()">
+            <i class="fa-solid fa-bars text-xl"></i>
+        </button>
+        <div class="hidden md:flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 font-medium">
+            <i class="fa-regular fa-calendar text-indigo-500"></i>
+            <span id="current-date"></span>
+        </div>
+        <div class="flex-1 flex items-center justify-end gap-3">
+            <button id="theme-toggle" onclick="toggleTheme()" class="w-9 h-9 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 hover:text-indigo-500 dark:hover:text-indigo-400 transition">
+                <i id="theme-icon" class="fa-solid fa-moon text-sm"></i>
+            </button>
+            <div class="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-sm ring-2 ring-indigo-500/40">
+                {{ user.username|make_list|first|upper }}
+            </div>
+        </div>
+    </header>
+    <main class="flex-1 p-4 md:p-8">
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+{% else %}
+{% block unauth_content %}{% endblock %}
+{% endif %}
+
+<div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-3 pointer-events-none"></div>
+
+{% if messages %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        {% for message in messages %}
+        showToast("{{ message|escapejs }}", "{{ message.tags }}");
+        {% endfor %}
+    });
+</script>
+{% endif %}
+
+<script>
+    function toggleTheme() {
+        const html = document.getElementById('html-root');
+        const icon = document.getElementById('theme-icon');
+        if (html.classList.contains('dark')) {
+            html.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+            if (icon) icon.className = 'fa-solid fa-sun text-sm';
+        } else {
+            html.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+            if (icon) icon.className = 'fa-solid fa-moon text-sm';
+        }
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        const icon = document.getElementById('theme-icon');
+        if (icon && !document.getElementById('html-root').classList.contains('dark')) {
+            icon.className = 'fa-solid fa-sun text-sm';
+        }
+        const el = document.getElementById('current-date');
+        if (el) el.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    });
+    function toggleSidebar() {
+        const sb = document.getElementById('sidebar');
+        const ov = document.getElementById('sidebar-overlay');
+        if (sb) sb.classList.toggle('-translate-x-full');
+        if (ov) ov.classList.toggle('hidden');
+    }
+    function showToast(message, type) {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        const ok = !type || !type.includes('error');
+        toast.className = 'toast-enter pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl text-sm font-medium max-w-sm ' + (ok ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white');
+        toast.innerHTML = '<i class="fa-solid ' + (ok ? 'fa-circle-check' : 'fa-circle-xmark') + '"></i><span>' + message + '</span>';
+        container.appendChild(toast);
+        setTimeout(function () {
+            toast.style.opacity = '0'; toast.style.transition = 'opacity 0.5s';
+            setTimeout(function () { toast.remove(); }, 500);
+        }, 4000);
+    }
+</script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

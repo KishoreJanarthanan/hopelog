@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Posts{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h1>All Posts</h1>
+    <a href="{% url 'post-create' %}" class="btn btn-primary">+ New Post</a>
+</div>
+
+{% if posts %}
+    {% for post in posts %}
+    <div class="card">
+        <h2><a href="{% url 'post-detail' post.pk %}" style="text-decoration:none; color:#2c3e50;">{{ post.title }}</a></h2>
+        <p style="color:#777; font-size:0.85rem;">{{ post.created_at|date:"N j, Y" }}</p>
+        <p>{{ post.content|truncatewords:30 }}</p>
+        <div style="margin-top:1rem;">
+            <a href="{% url 'post-detail' post.pk %}" class="btn btn-secondary">Read</a>
+            <a href="{% url 'post-update' post.pk %}" class="btn btn-primary" style="margin-left:0.5rem;">Edit</a>
+            <a href="{% url 'post-delete' post.pk %}" class="btn btn-danger" style="margin-left:0.5rem;">Delete</a>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="card">
+        <p>No posts yet. <a href="{% url 'post-create' %}">Create the first one!</a></p>
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}Daily Log | LifeLog{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div>
+        <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white flex items-center gap-3">
+            <span class="w-9 h-9 bg-amber-500 rounded-xl flex items-center justify-center text-white"><i class="fa-solid fa-sun text-base"></i></span>
+            Daily Log
+        </h1>
+        <p class="text-slate-400 text-sm mt-1 ml-12">Track your mood, energy, and daily reflection.</p>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-6 items-start">
+
+        <!-- Log Form -->
+        <div class="w-full lg:w-80 flex-shrink-0">
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-6 sticky top-24">
+                <h2 class="text-base font-bold text-slate-900 dark:text-white mb-4">
+                    {% if existing %}Update Today's Log{% else %}Log Today{% endif %}
+                </h2>
+                <form method="POST" class="space-y-5">
+                    {% csrf_token %}
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Mood (1–10)</label>
+                        <div class="flex gap-2 flex-wrap">
+                            {% for i in "12345678910" %}{% endfor %}
+                            <input type="range" name="mood" id="mood-slider" min="1" max="10" value="{% if existing %}{{ existing.mood }}{% else %}5{% endif %}"
+                                class="w-full accent-amber-500" oninput="document.getElementById('mood-val').textContent=this.value">
+                        </div>
+                        <div class="flex justify-between text-xs text-slate-400 mt-1">
+                            <span>😔 Low</span>
+                            <span id="mood-val" class="font-bold text-amber-500">{% if existing %}{{ existing.mood }}{% else %}5{% endif %}</span>
+                            <span>😄 High</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Energy (1–10)</label>
+                        <input type="range" name="energy" id="energy-slider" min="1" max="10" value="{% if existing %}{{ existing.energy }}{% else %}5{% endif %}"
+                            class="w-full accent-blue-500" oninput="document.getElementById('energy-val').textContent=this.value">
+                        <div class="flex justify-between text-xs text-slate-400 mt-1">
+                            <span>🪫 Drained</span>
+                            <span id="energy-val" class="font-bold text-blue-400">{% if existing %}{{ existing.energy }}{% else %}5{% endif %}</span>
+                            <span>⚡ Charged</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Sleep Hours</label>
+                        <input type="number" name="sleep_hours" step="0.5" min="0" max="24" placeholder="e.g. 7.5"
+                            value="{% if existing and existing.sleep_hours %}{{ existing.sleep_hours }}{% endif %}"
+                            class="w-full bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Journal Note</label>
+                        <textarea name="note" rows="4" placeholder="How was your day? What's on your mind?"
+                            class="w-full bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-white rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-amber-500 outline-none transition placeholder:text-slate-400 resize-none">{% if existing %}{{ existing.note }}{% endif %}</textarea>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold transition shadow-lg shadow-amber-500/20 active:scale-95">
+                        <i class="fa-solid fa-check"></i> {% if existing %}Update Log{% else %}Save Log{% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- History -->
+        <div class="flex-1 min-w-0">
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-2xl overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700/60">
+                    <h3 class="font-bold text-slate-900 dark:text-white">Log History (Last 14 Days)</h3>
+                </div>
+                {% if recent_logs %}
+                <div class="divide-y divide-slate-100 dark:divide-slate-700/40">
+                    {% for log in recent_logs %}
+                    <div class="px-6 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm font-semibold text-slate-800 dark:text-slate-200">{{ log.date|date:"l, M d" }}</span>
+                            <div class="flex gap-4 text-sm">
+                                <span class="text-amber-500 font-bold">😊 {{ log.mood }}/10</span>
+                                <span class="text-blue-400 font-bold">⚡ {{ log.energy }}/10</span>
+                                {% if log.sleep_hours %}<span class="text-slate-400">🌙 {{ log.sleep_hours }}h</span>{% endif %}
+                            </div>
+                        </div>
+                        {% if log.note %}
+                        <p class="text-xs text-slate-400 italic mt-1 line-clamp-1">"{{ log.note }}"</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="py-16 text-center">
+                    <div class="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-3 text-3xl">☀️</div>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">No logs yet. Fill the form to get started!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
